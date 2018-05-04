@@ -2,9 +2,9 @@
 Тому всі поради будуть стосуватись користувачів Macbook.
 
 План туторіалу:
-Розробка токена.
-Тестування токена.
-Створення контракту для проведення crowdsale (Розробка додаткового середовища для токена).
+1. Розробка токена.
+2. Тестування токена.
+3. Створення контракту для проведення crowdsale.
 
 
 Частина 1. Розробка власного токена
@@ -25,12 +25,13 @@
 Я називаю свій MalCoin.sol.
 
 2. Другий крок
-Створюємо контракт MalCoin
-    pragma solidity ^0.4.21; // Зазначаємо останню стабільну версію Solidity
-    
-    contract MalCoin {
-    }
+Створюємо контракт MalCoin.
 
+`pragma solidity ^0.4.21; // Зазначаємо останню стабільну версію Solidity
+
+contract MalCoin {
+}
+`
 Слово contract тут - це те ж саме, що і class в інших мовах програмування.
 
 3. Третій крок
@@ -69,7 +70,7 @@ function totalSupply() public view returns (uint256) {
 
 
 Як бачимо, поки що функціонал не дозволяє нам перекидувати токени на іншим користувачам. Тому напишемо функцію transfer.
-
+`
 function transfer(address _to, uint256 _value) public returns (bool) {
 	// тут ми не дозволяємо перекидувати токени на нульову адресу
 	require(_to != address(0));
@@ -84,22 +85,22 @@ function transfer(address _to, uint256 _value) public returns (bool) {
 	emit Transfer(msg.sender, _to, _value);
 	return true;
 }
-
+`
 У цій функції багато нового. Розглянемо усе по порядку.
-require - функція, яка вбудована в Solidity і дозволяє припиняти виконання коду і внесення змін до блокчейну, якщо не справджуються умови зазначені в ній. Якщо (_to != address(0)) == true, то код виконуватиметься далі. Якщо буде fasle, то спрацює механізм викидання з функції - throw.
-emit Transfer(…) - це event, який ми ще не написали. Івенти використовуються для того, щоб сповіщати про певні операції. Є деякі програми, які вміють їх виловлювати і показувати повідомлення для юзера. Наприклад - електронні гаманці вміють ловити івенти і показувати їх юзеру.
-msg.sender - юзер, який визиває функцію. msg - це об’єкт, який вбудований у Solidity. працює як глобальна змінна.
+`require` - функція, яка вбудована в Solidity і дозволяє припиняти виконання коду і внесення змін до блокчейну, якщо не справджуються умови зазначені в ній. Якщо (_to != address(0)) == true, то код виконуватиметься далі. Якщо буде fasle, то спрацює механізм викидання з функції - throw.
+`emit Transfer(…)` - це event, який ми ще не написали. Івенти використовуються для того, щоб сповіщати про певні операції. Є деякі програми, які вміють їх виловлювати і показувати повідомлення для юзера. Наприклад - електронні гаманці вміють ловити івенти і показувати їх юзеру.
+`msg.sender` - юзер, який визиває функцію. msg - це об’єкт, який вбудований у Solidity. працює як глобальна змінна.
 
 
-Реалізуємо event Transfer.
+Реалізуємо `event Transfer`.
 
-event Transfer(address indexed _from, address indexed _to, uint256 _value);
+`event Transfer(address indexed _from, address indexed _to, uint256 _value);`
 
 В івентах є тільки сигнатура без реалізації.
 
 
 Тепер наш контракт з базовим функціоналом виглядає таким чином.
-
+`
 contract MalCoin {
 	mapping(address => uint256) balances;
 	uint256 totalSupply_;
@@ -124,23 +125,7 @@ contract MalCoin {
 		return balances[_owner];
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+`
 
 
 4. Четвертий крок
@@ -148,10 +133,11 @@ contract MalCoin {
 
 Є ситуації коли необхідно дозволити іншим користувачам чи контрактам користуватись вашим балансом токенів. Для цього ми створюємо mapping, який зберігатиме інформацію про те, скільки токенів один користувач дозволив використовувати іншому користувачу.
 
-mapping (address => mapping (address => uint256)) internal allowed;
+`mapping (address => mapping (address => uint256)) internal allowed;`
 
 Цей mapping виглядає дивно. Але за допомогою нього можна робити наступне:
 
+`
 address public user = 0xdd870fa1b7c4700f2bd7f44238821c26f7392148
 address public user1 = 0xca35b7d915458ef540ade6068dfe2f44e8fa733c
 address public user2 = 0x14723a09acff6d2a60dcdf7aa4aff308fddc160c
@@ -160,12 +146,14 @@ address public someContract = 0x4b0897b0513fdc7c541b6d9d7e929c4e5364d2db
 allowed[user][user1] = 1000;
 allowed[user][user2] = 20000;
 allowed[user][someContract] = 100000;
+`
 
 Як ви бачите, user дозволив user1 використовувати 1000 токенів, а user2 - 20000, a someContract - 100000.
 
 
 Тепер напишемо функцію, яка буде встановлювати ліміт токенів, які будуть дозволені іншій особі для використання.
 
+`
 function approve(address _spender, uint256 _value) public returns (bool) {
 	// Встановлюємо ліміт токенів
 	allowed[msg.sender][_spender] = _value;
@@ -173,14 +161,16 @@ function approve(address _spender, uint256 _value) public returns (bool) {
 	emit Approval(msg.sender, _spender, _value);
 	return true;
 }
+`
 
-Реалізуємо event Approval.
+Реалізуємо `event Approval`.
 
-event Approval(address indexed owner, address indexed spender, uint256 value);
+`event Approval(address indexed owner, address indexed spender, uint256 value);`
 
 
 За допомогою функції transfer ми можемо тільки перекидати токени з msg.sender до отримувача. Тепер за допомогою змінної allowed ми напишемо функцію, яка зможе перекидувати токени з будь-якого адреса на інший.
 
+`
 function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
 	require(_to != address(0));
 	require(_value <= balances[_from]);
@@ -195,17 +185,19 @@ function transferFrom(address _from, address _to, uint256 _value) public returns
 	emit Transfer(_from, _to, _value);
 	return true;
 }
-
+`
 
 Для того, щоб подивитись яку кількість токенів дозволено використовувати одному користувачу від імені іншого напишемо функцію allowance.
 
+`
 function allowance(address _owner, address _spender) public view returns (uint256) {
 	return allowed[_owner][_spender];
 }
-
+`
 
 Для того, щоб збільшити або зменшити Approval напишемо додаткові дві функції.
 
+`
 function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
 	allowed[msg.sender][_spender] = allowed[msg.sender][_spender] +_addedValue;
 	emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
@@ -222,15 +214,15 @@ function decreaseApproval(address _spender, uint _subtractedValue) public return
 	emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
 	return true;
 }
-
+`
 
 
 Після того як ми написали смарт контракт, зробимо його більш безпечним. Проблема будь-який числових змінних в тому, що для них виділяється конкретна кількість бітів. В Solidity можна створювати змінні, які можуть зберігати числа на 256 біт. Максимальне число, яке залізає в 256 біт - 115792089237316195423570985008687907853269984665640564039457584007913129639935.
 Вам здається, що у вас ніколи такі числа не вийдуть, адже вони занадто великі? Але це число доволі просто отримати. Зараз покажу це на простому прикладі:
-
+`
 uint256 public num = 0;
 uint256 public max = num - 1;
-
+`
 Все, у змінній max записано число, яке я зазначав вище. Перевірте це в remix.
 
 Насправді є набагато більше проблем з числами, яких потрібно уникнути.
@@ -238,6 +230,7 @@ uint256 public max = num - 1;
 
 Разом з бібліотекою SafeMath наш код виглядатиме так:
 
+`
 pragma solidity ^0.4.21;
 
 library SafeMath {
@@ -339,3 +332,4 @@ mapping (address => mapping (address => uint256)) internal allowed;
   }
 
 }
+`
